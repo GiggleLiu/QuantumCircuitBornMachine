@@ -23,3 +23,4 @@ _*.pdf
 *.tex
 *.json
 _*.png
+.ipynb_checkpoints
