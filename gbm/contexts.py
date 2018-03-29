@@ -20,12 +20,12 @@ class CircuitContext(object):
     Context for running circuits.
 
     Args:
-        task ('ibm'|'draw'|'simulate'): task that decide the environment type.
         num_bit (int): number of bits in register.
+        task ('ibm'|'draw'|'simulate'): task that decide the environment type.
         ibm_config (dict): extra arguments for IBM backend.
     '''
 
-    def __init__(self, task, num_bit, ibm_config=None):
+    def __init__(self, num_bit, task, ibm_config=None):
         self.task = task
         self.num_bit = num_bit
         self.ibm_config = ibm_config
@@ -114,3 +114,40 @@ class CircuitContext(object):
         pdffile = TEX_FILENAME[:-3]+'pdf'
         os.system('pdflatex %s'%TEX_FILENAME)
         openfile(pdffile)
+
+
+class ScipyContext(object):
+    '''
+    Scipy context for running circuits.
+
+    Args:
+        num_bit (int): number of bits in register.
+        ibm_config (dict): extra arguments for IBM backend.
+    '''
+
+    def __init__(self, num_bit, *args, **kwargs):
+        self.num_bit = num_bit
+
+    def __enter__(self):
+        '''
+        Enter context,
+
+        Attributes:
+            eng (MainEngine): main engine.
+            backend ('graphical' or 'simulate'): backend used.
+            qureg (Qureg): quantum register.
+        '''
+        self.qureg = np.zeros(2**self.num_bit)
+        self.qureg[0] = 1
+        return self
+
+    def __exit__(self, *args):
+        '''
+        exit, meanwhile cheat and get wave function.
+
+        Attributes:
+            wf (1darray): for 'simulate' task, the wave function vector.
+            res (1darray): for 'ibm' task, the measurements output.
+        '''
+        self.wf = self.qureg
+        return self

@@ -1,7 +1,8 @@
 import numpy as np
 import time
+import traceback
 
-from contexts import CircuitContext
+from contexts import CircuitContext, ScipyContext
 
 class BornMachine(object):
     '''
@@ -16,24 +17,35 @@ class BornMachine(object):
         self.mmd = mmd
         self.p_data = p_data
         self.batch_size = batch_size
+        self.context = ScipyContext
 
     @property
     def depth(self):
         return (len(self.circuit)-1)//2
 
+    def chcontext(self, context):
+        if context == 'scipy':
+            self.context = ScipyContext
+        elif context == 'projectq':
+            self.context = CircuitContext
+        else:
+            raise
+
     def viz(self, theta_list=None):
         '''visualize this Born Machine'''
         if theta_list is None:
             theta_list = np.random.random(circuit.num_param)*2*np.pi
-        with CircuitContext('draw', self.circuit.num_bit) as cc:
+        with self.context( self.circuit.num_bit, 'draw') as cc:
             self.circuit(cc.qureg, theta_list)
 
     def pdf(self, theta_list):
         '''get probability distribution function'''
-        with CircuitContext('simulate', self.circuit.num_bit) as cc:
-            t0=time.time()
-            self.circuit(cc.qureg, theta_list)
-            t1=time.time()
+        cc = self.context( self.circuit.num_bit, 'simulate')
+        cc = cc.__enter__()
+        t0=time.time()
+        self.circuit(cc.qureg, theta_list)
+        t1=time.time()
+        cc = cc.__exit__()
         t2=time.time()
         print(t1-t0,t2-t1)
         pl = np.abs(cc.wf)**2
