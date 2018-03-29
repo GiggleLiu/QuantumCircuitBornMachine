@@ -10,7 +10,7 @@ from gbm import BornMachine
 from mmd import RBFMMD2
 
 
-def load_gaussian(num_bit, depth):
+def load_gaussian(num_bit, depth, version='scipy'):
     '''gaussian distribution.'''
     geometry = (num_bit,)
     hndim = 2**num_bit
@@ -27,9 +27,11 @@ def load_gaussian(num_bit, depth):
 
     # Born Machine
     bm = BornMachine(circuit, mmd, p_bs)
+    if version == 'projectq':
+        bm.set_context('projectq')
     return bm
 
-def load_barstripe(geometry, depth):
+def load_barstripe(geometry, depth, version='scipy'):
     '''3 x 3 bar and stripes.'''
     num_bit = np.prod(geometry)
 
@@ -45,4 +47,6 @@ def load_barstripe(geometry, depth):
 
     # Born Machine
     bm = BornMachine(circuit, mmd, p_bs)
+    if version == 'projectq':
+        bm.set_context('projectq')
     return bm

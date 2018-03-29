@@ -23,7 +23,7 @@ class BornMachine(object):
     def depth(self):
         return (len(self.circuit)-1)//2
 
-    def chcontext(self, context):
+    def set_context(self, context):
         if context == 'scipy':
             self.context = ScipyContext
         elif context == 'projectq':
@@ -47,7 +47,7 @@ class BornMachine(object):
         t1=time.time()
         cc = cc.__exit__()
         t2=time.time()
-        print(t1-t0,t2-t1)
+        #print(t1-t0,t2-t1)
         pl = np.abs(cc.wf)**2
         # introducing sampling error
         if self.batch_size is not None:

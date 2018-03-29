@@ -48,27 +48,31 @@ class CleverBlockQueue(BlockQueue):
         self.memo = None
 
     def __call__(self, qureg, theta_list):
+        if not isinstance(qureg, np.ndarray):
+            return super(CleverBlockQueue, self).__call__(qureg, theta_list)
         mats = []
         theta_last = self.theta_last
         self.theta_last = theta_list.copy()
+        qureg_ = qureg
         for iblock, block in enumerate(self):
             # generate or use a block matrix
             num_param = block.num_param
-            if self.memo is not None and np.allclose(theta_list[:num_param], theta_last[:num_param]):
+            if self.memo is not None and np.abs(theta_list[:num_param]-theta_last[:num_param]).sum()<1e-12:#np.allclose(theta_list[:num_param], theta_last[:num_param]):
                 mat = self.memo[iblock]
                 theta_list = theta_list[num_param:]
                 theta_last = theta_last[num_param:]
             else:
-                mat, theta_list = block.tomat(theta_list)
+                #mat, theta_list = block.tomat(theta_list)
+                mat, theta_list = block.tocsr(theta_list)
                 if theta_last is not None:
                     theta_last = theta_last[num_param:]
-            qureg = mat.dot(qureg)
+            #qureg_ = mat.dot(qureg_)
+            for mat_i in mat:
+                qureg_ = mat_i.dot(qureg_)
             mats.append(mat)
-        #res = reduce(lambda x,y:x.dot(y), mats)
+        np.testing.assert_(len(theta_list)==0)
         self.memo = mats
-        return qureg
-        #np.testing.assert_(len(theta_list)==0)
-        #return res
+        qureg[...] = qureg_
 
 
 class ArbituaryRotation(CircuitBlock):
@@ -100,6 +104,15 @@ class ArbituaryRotation(CircuitBlock):
         theta_list_[self.mask] = theta_list[:nvar]
         rots = [qclibd.rot(*ths) for ths in theta_list_.reshape([self.num_bit,3])]
         res = qclibd._(rots, np.arange(self.num_bit), self.num_bit)
+        return res, theta_list[nvar:]
+
+    def tocsr(self, theta_list):
+        '''transform this block to csr_matrix.'''
+        nvar = sum(self.mask)
+        theta_list_ = np.zeros(3*self.num_bit)
+        theta_list_[self.mask] = theta_list[:nvar]
+        rots = [qclibs.rot(*ths) for ths in theta_list_.reshape([self.num_bit,3])]
+        res = [qclibs._([rot], [i], self.num_bit) for i,rot in enumerate(rots)]
         return res, theta_list[nvar:]
 
 
@@ -136,6 +149,16 @@ class Entangler(CircuitBlock):
         for i, j in self.pairs[1:]:
             res = qclibs.CNOT(i,j,self.num_bit).dot(res)
         return res, theta_list
+
+    def tocsr(self, theta_list):
+        '''transform this block to csr_matrix.'''
+        i, j = self.pairs[0]
+        res = qclibs.CNOT(i, j, self.num_bit)
+        for i, j in self.pairs[1:]:
+            res = qclibs.CNOT(i,j,self.num_bit).dot(res)
+        res.eliminate_zeros()
+        return [res], theta_list
+
 
 def const_entangler(num_bit, pairs, gate):
     return Entangler(num_bit, pairs, gate, 0)

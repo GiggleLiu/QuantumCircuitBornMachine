@@ -137,7 +137,7 @@ class ScipyContext(object):
             backend ('graphical' or 'simulate'): backend used.
             qureg (Qureg): quantum register.
         '''
-        self.qureg = np.zeros(2**self.num_bit)
+        self.qureg = np.zeros(2**self.num_bit, dtype='complex128')
         self.qureg[0] = 1
         return self
 
