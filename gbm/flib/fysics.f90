@@ -141,9 +141,50 @@ subroutine fkernel_expect_bin(basis, px, py, ndim, kd, nkd, k)
 
     k = 0D0
     do i = 1,ndim
-        !absd = basis .ieor. basis(i)
         absd = ieor(basis,basis(i))
         absd = popcnt(absd)
         k=k+sum(kd(absd+1)*px)*py(i)
     enddo
-endsubroutine fkernel_expect_bin
+end subroutine fkernel_expect_bin
+
+
+subroutine fmix_rbf_kernel_bin(x, y, sigma_list, nx, ny, nsigma, k)
+    implicit none
+    integer,intent(in) :: nx, ny, nsigma
+    integer*4,intent(in) :: x(nx), y(ny)
+    real*8,intent(in) :: sigma_list(nsigma)
+    real*8,intent(out) :: k
+
+    integer*4 :: absd(nx), j, si
+    real*8 :: sigma
+
+    k=0D0
+    do si = 1,nsigma
+        sigma = sigma_list(si)
+        do j = 1,ny
+            absd = ieor(x, y(j))
+            absd = popcnt(absd)
+            k=k+sum(exp(-1D0 / (2 * sigma) * absd))
+        enddo
+    enddo
+    k = k/nx/ny
+end subroutine fmix_rbf_kernel_bin
+
+
+subroutine fmix_rbf_kernel_dict(x, y, kd, nkd, nx, ny, k)
+    implicit none
+    integer,intent(in) :: nx, ny, nkd
+    integer*4,intent(in) :: x(nx), y(ny)
+    real*8,intent(in) :: kd(nkd)
+    real*8,intent(out) :: k
+
+    integer*4 :: absd(nx), j
+
+    k = 0D0
+    do j = 1,ny
+        absd = ieor(x, y(j))
+        absd = popcnt(absd)
+        k=k+sum(kd(absd+1))
+    enddo
+    k = k/nx/ny
+end subroutine fmix_rbf_kernel_dict

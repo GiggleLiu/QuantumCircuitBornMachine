@@ -3,6 +3,9 @@ import time
 import traceback
 
 from contexts import CircuitContext, ScipyContext
+from utils import sample_from_prob
+
+SAMPLE_PREFER_SIZE = 2000
 
 class BornMachine(object):
     '''
@@ -18,6 +21,8 @@ class BornMachine(object):
         self.p_data = p_data
         self.batch_size = batch_size
         self.context = ScipyContext
+        if not self.mmd.use_prob:
+            self.databatch = sample_from_prob(np.arange(len(p_data)), p_data, batch_size)
 
     @property
     def depth(self):
@@ -40,46 +45,56 @@ class BornMachine(object):
 
     def pdf(self, theta_list):
         '''get probability distribution function'''
-        cc = self.context( self.circuit.num_bit, 'simulate')
-        cc = cc.__enter__()
         t0=time.time()
-        self.circuit(cc.qureg, theta_list)
+        with self.context( self.circuit.num_bit, 'simulate') as cc:
+            self.circuit(cc.qureg, theta_list)
         t1=time.time()
-        cc = cc.__exit__()
-        t2=time.time()
-        #print(t1-t0,t2-t1)
+        #print(t1-t0)
         pl = np.abs(cc.wf)**2
-        # introducing sampling error
-        if self.batch_size is not None:
-            pl = prob_from_sample(sample_from_prob(np.arange(len(pl)), pl, self.batch_size),
-                    len(pl), False)
         return pl
+
+    def _sample_or_prob(self, theta_list):
+        pl = self.pdf(theta_list)
+        if self.batch_size is not None:
+            # introducing sampling error
+            samples = sample_from_prob(np.arange(len(pl)), pl, self.batch_size)
+            if self.mmd.use_prob:
+                state = prob_from_sample(samples, len(pl), False)
+            else:
+                state = samples
+        else:
+            if self.mmd.use_prob:
+                state = pl
+            else:
+                raise
+        return state
+
+    def _data(self):
+        return self.p_data if self.mmd.use_prob else self.databatch
 
     def mmd_loss(self, theta_list):
         '''get the loss'''
-        # get probability distritbution of Born Machine
-        self._prob = self.pdf(theta_list)
-        # use wave function to get mmd loss
-        return self.mmd(self._prob, self.p_data)
+        self._state = self._sample_or_prob(theta_list)
+        return self.mmd(self._state, self._data)
 
     def gradient(self, theta_list):
         '''
         cheat and get gradient.
         '''
-        prob = self._prob
+        state = self._state
         grad = []
         for i in range(len(theta_list)):
             # pi/2 phase
             theta_list[i] += np.pi/2.
-            prob_pos = self.pdf(theta_list)
+            state_pos = self._sample_or_prob(theta_list)
             # -pi/2 phase
             theta_list[i] -= np.pi
-            prob_neg = self.pdf(theta_list)
+            state_neg = self._sample_or_prob(theta_list)
             # recover
             theta_list[i] += np.pi/2.
 
-            grad_pos = self.mmd.kernel_expect(prob, prob_pos) - self.mmd.kernel_expect(prob, prob_neg)
-            grad_neg = self.mmd.kernel_expect(self.p_data, prob_pos) - self.mmd.kernel_expect(self.p_data, prob_neg)
+            grad_pos = self.mmd.kernel_expect(state, state_pos) - self.mmd.kernel_expect(state, state_neg)
+            grad_neg = self.mmd.kernel_expect(self.p_data, state_pos) - self.mmd.kernel_expect(self.p_data, state_neg)
             grad.append(grad_pos - grad_neg)
         return np.array(grad)
 

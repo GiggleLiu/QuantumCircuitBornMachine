@@ -43,10 +43,10 @@ def load_barstripe(geometry, depth, version='scipy'):
     p_bs = barstripe_pdf(geometry)
 
     # mmd loss
-    mmd = RBFMMD2([0.25,0.5,1,2,4], num_bit, True)
+    mmd = RBFMMD2MEM([0.25,0.5,1,2,4], num_bit, True)
 
     # Born Machine
-    bm = BornMachine(circuit, mmd, p_bs)
+    bm = BornMachine(circuit, mmd, p_bs, batch_size=2000)
     if version == 'projectq':
         bm.set_context('projectq')
     return bm
