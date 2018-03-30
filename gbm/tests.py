@@ -99,13 +99,13 @@ def test_train_gaussian_scipy():
     pdb.set_trace()
 
 @profile
-def test_train_bs33():
+def test_train_bs():
     np.random.seed(2)
-    depth = 4
+    depth = 10
 
     bm = load_barstripe((3, 4), depth)
     theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
-    loss, theta_list = train(bm, theta_list, 'L-BFGS-B', max_iter=20)
+    loss, theta_list = train(bm, theta_list, 'L-BFGS-B', max_iter=200)
     pl = bm.pdf(theta_list)
 
     # display
@@ -135,4 +135,4 @@ if __name__ == '__main__':
     #test_qclibd()
     #test_qclib()
     #test_train_gaussian_scipy()
-    test_train_bs33()
+    test_train_bs()

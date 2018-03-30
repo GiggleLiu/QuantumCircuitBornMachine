@@ -126,3 +126,24 @@ subroutine fkron_csr_takerow(indptr1,indices1,dat1,indptr2,indices2,dat2,&
     enddo
     indptrn(ntake+1)=ed
 end subroutine fkron_csr_takerow
+
+subroutine fkernel_expect_bin(basis, px, py, ndim, kd, nkd, k)
+    implicit none
+    integer,intent(in) :: ndim, nkd
+    real*8,intent(in) :: px(ndim), py(ndim)
+    integer*4,intent(in) :: basis(ndim)
+    real*8,intent(in) :: kd(nkd)
+    real*8,intent(out) :: k
+
+    integer*4 :: absd(ndim), i
+    !f2py intent(inplace) :: basis, px, py, kd
+    !f2py intent(out) :: k
+
+    k = 0D0
+    do i = 1,ndim
+        !absd = basis .ieor. basis(i)
+        absd = ieor(basis,basis(i))
+        absd = popcnt(absd)
+        k=k+sum(kd(absd+1)*px)*py(i)
+    enddo
+endsubroutine fkernel_expect_bin

@@ -50,9 +50,12 @@ class CleverBlockQueue(BlockQueue):
     def __call__(self, qureg, theta_list):
         if not isinstance(qureg, np.ndarray):
             return super(CleverBlockQueue, self).__call__(qureg, theta_list)
+        # shall we change memo? if theta_list change <= 2 parameters, then don't touch memo.
+        remember = self.theta_last is None or (abs(self.theta_last-theta_list)>1e-12).sum() > 1
+
         mats = []
         theta_last = self.theta_last
-        self.theta_last = theta_list.copy()
+        if remember: self.theta_last = theta_list.copy()
         qureg_ = qureg
         for iblock, block in enumerate(self):
             # generate or use a block matrix
@@ -62,8 +65,11 @@ class CleverBlockQueue(BlockQueue):
                 theta_list = theta_list[num_param:]
                 theta_last = theta_last[num_param:]
             else:
+                if self.memo is not None and not remember:
+                    mat, theta_list = rot_tocsr_update1(block, self.memo[iblock], theta_last, theta_list)
+                else:
+                    mat, theta_list = block.tocsr(theta_list)
                 #mat, theta_list = block.tomat(theta_list)
-                mat, theta_list = block.tocsr(theta_list)
                 if theta_last is not None:
                     theta_last = theta_last[num_param:]
             #qureg_ = mat.dot(qureg_)
@@ -71,7 +77,7 @@ class CleverBlockQueue(BlockQueue):
                 qureg_ = mat_i.dot(qureg_)
             mats.append(mat)
         np.testing.assert_(len(theta_list)==0)
-        self.memo = mats
+        if remember: self.memo = mats
         qureg[...] = qureg_
 
 
@@ -81,7 +87,7 @@ class ArbituaryRotation(CircuitBlock):
         self.mask = np.array([True] * (3*num_bit), dtype='bool')
 
     def __call__(self, qureg, theta_list):
-        nvar = sum(self.mask)
+        nvar = self.mask.sum()
         gates = [Rz, Rx, Rz]
         for i, (theta, mask) in enumerate(zip(theta_list[:nvar], self.mask)):
             ibit, igate = i//3, i%3
@@ -95,11 +101,11 @@ class ArbituaryRotation(CircuitBlock):
 
     @property
     def num_param(self):
-        return sum(self.mask)
+        return self.mask.sum()
 
     def tomat(self, theta_list):
         '''transform this block to csr_matrix.'''
-        nvar = sum(self.mask)
+        nvar = self.mask.sum()
         theta_list_ = np.zeros(3*self.num_bit)
         theta_list_[self.mask] = theta_list[:nvar]
         rots = [qclibd.rot(*ths) for ths in theta_list_.reshape([self.num_bit,3])]
@@ -108,13 +114,12 @@ class ArbituaryRotation(CircuitBlock):
 
     def tocsr(self, theta_list):
         '''transform this block to csr_matrix.'''
-        nvar = sum(self.mask)
+        nvar = self.mask.sum()
         theta_list_ = np.zeros(3*self.num_bit)
         theta_list_[self.mask] = theta_list[:nvar]
         rots = [qclibs.rot(*ths) for ths in theta_list_.reshape([self.num_bit,3])]
         res = [qclibs._([rot], [i], self.num_bit) for i,rot in enumerate(rots)]
         return res, theta_list[nvar:]
-
 
 class Entangler(CircuitBlock):
     def __init__(self, num_bit, pairs, gate, num_param_per_pair):
@@ -140,7 +145,7 @@ class Entangler(CircuitBlock):
 
     @property
     def num_param(self):
-        return sum(self.mask)
+        return self.mask.sum()
 
     def tomat(self, theta_list):
         '''transform this block to csr_matrix.'''
@@ -158,6 +163,22 @@ class Entangler(CircuitBlock):
             res = qclibs.CNOT(i,j,self.num_bit).dot(res)
         res.eliminate_zeros()
         return [res], theta_list
+
+
+def rot_tocsr_update1(rot, old, theta_old, theta_new):
+    '''rotation layer csr_matrix update method.'''
+    nvar = rot.mask.sum()
+    idiff_param = np.where(abs(theta_old-theta_new)>1e-12)[0].item()
+    idiff = np.where(rot.mask)[0][idiff_param]
+
+    # get rotation parameters
+    isite = idiff//3
+    theta_list_ = np.zeros(3*rot.num_bit)
+    theta_list_[rot.mask] = theta_new[:nvar]
+
+    new = old[:]
+    new[isite] = qclibs._(qclibs.rot(*theta_list_[isite*3:isite*3+3]), isite, rot.num_bit)
+    return new, theta_new[nvar:]
 
 
 def const_entangler(num_bit, pairs, gate):

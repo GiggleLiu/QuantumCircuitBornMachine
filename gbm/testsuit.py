@@ -7,7 +7,7 @@ import numpy as np
 from blocks import get_demo_circuit, get_nn_pairs
 from dataset import gaussian_pdf, barstripe_pdf, digit_basis, binary_basis
 from gbm import BornMachine
-from mmd import RBFMMD2
+from mmd import RBFMMD2, RBFMMD2MEM
 
 
 def load_gaussian(num_bit, depth, version='scipy'):
@@ -23,7 +23,7 @@ def load_gaussian(num_bit, depth, version='scipy'):
     p_bs = gaussian_pdf(geometry, mu=hndim/2., sigma=hndim/4.)
 
     # mmd loss
-    mmd = RBFMMD2(sigma_list=[0.25,0.5,1,2,4], basis=digit_basis(geometry))
+    mmd = RBFMMD2([0.25,0.5,1,2,4], num_bit, False)
 
     # Born Machine
     bm = BornMachine(circuit, mmd, p_bs)
@@ -43,7 +43,7 @@ def load_barstripe(geometry, depth, version='scipy'):
     p_bs = barstripe_pdf(geometry)
 
     # mmd loss
-    mmd = RBFMMD2(sigma_list=[0.5,1,2,4], basis=binary_basis((num_bit,)))
+    mmd = RBFMMD2([0.25,0.5,1,2,4], num_bit, True)
 
     # Born Machine
     bm = BornMachine(circuit, mmd, p_bs)
