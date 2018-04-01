@@ -31,7 +31,7 @@ def load_gaussian(num_bit, depth, version='scipy'):
         bm.set_context('projectq')
     return bm
 
-def load_barstripe(geometry, depth, version='scipy'):
+def load_barstripe(geometry, depth, batch_size=None, version='scipy'):
     '''3 x 3 bar and stripes.'''
     num_bit = np.prod(geometry)
 
@@ -43,10 +43,31 @@ def load_barstripe(geometry, depth, version='scipy'):
     p_bs = barstripe_pdf(geometry)
 
     # mmd loss
-    mmd = RBFMMD2MEM([0.25,0.5,1,2,4], num_bit, True)
+    mmd = RBFMMD2([0.25,0.5,1,2,4], num_bit, True)
 
     # Born Machine
-    bm = BornMachine(circuit, mmd, p_bs, batch_size=2000)
+    bm = BornMachine(circuit, mmd, p_bs, batch_size=batch_size)
+    if version == 'projectq':
+        bm.set_context('projectq')
+    return bm
+
+
+def load_complex(geometry, depth, batch_size=None, version='scipy'):
+    '''3 x 3 bar and stripes.'''
+    num_bit = np.prod(geometry)
+
+    # standard circuit
+    pairs = get_nn_pairs(geometry)
+    circuit = get_demo_circuit(num_bit, depth, pairs)
+
+    # complex wave function
+    wf = coil_wf(num_bit, winding=2)
+
+    # mmd loss
+    mmd = RBFMMD2([0.25,1,4], num_bit, False)
+
+    # Born Machine
+    bm = CloneBornMachine(circuit, mmd, wf, batch_size=batch_size)
     if version == 'projectq':
         bm.set_context('projectq')
     return bm

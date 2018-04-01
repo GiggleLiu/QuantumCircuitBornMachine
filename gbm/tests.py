@@ -103,7 +103,7 @@ def test_train_bs():
     np.random.seed(2)
     depth = 10
 
-    bm = load_barstripe((3, 4), depth)
+    bm = load_barstripe((3, 3), depth)
     theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
     loss, theta_list = train(bm, theta_list, 'L-BFGS-B', max_iter=200)
     pl = bm.pdf(theta_list)
@@ -134,5 +134,5 @@ if __name__ == '__main__':
     #test_bm()
     #test_qclibd()
     #test_qclib()
-    #test_train_gaussian_scipy()
-    test_train_bs()
+    test_train_gaussian_scipy()
+    #test_train_bs()

@@ -11,6 +11,7 @@ class RBFMMD2(object):
         self.is_binary = is_binary
         self.basis = np.arange(2**num_bit,dtype='uint32')
         self.K = mix_rbf_kernel(self.basis, self.basis, self.sigma_list, is_binary)
+        self.use_prob = True
 
     def __call__(self, px, py):
         '''
@@ -81,7 +82,6 @@ def mix_rbf_kernel(x, y, sigma_list, is_binary):
     if is_binary:
         dx2 = x[:,None]^y
         popcount(dx2)
-        pdb.set_trace()
     else:
         dx2 = (x[:, None] - y)**2
     return _mix_rbf_kernel_d(dx2, sigma_list)
