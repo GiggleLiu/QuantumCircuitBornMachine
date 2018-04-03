@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import dec, assert_, assert_raises,\
     assert_almost_equal, assert_allclose
 import matplotlib.pyplot as plt
-import pdb
+import pdb, os
 from profilehooks import profile
 import scipy.sparse as sps
 
@@ -126,6 +126,26 @@ def test_qclibd():
     assert_allclose(cnot, sps.coo_matrix(([1,1,1,1],([0,1,2,3],[0,1,3,2]))).toarray())
     assert_allclose(qclibd.rot(-np.pi/2.,np.pi/4.,np.pi/2.),qclibd.ry(np.pi/4.))
 
+def grad_stat_layer(seed=2):
+    '''layerwise gradient statistics'''
+    np.random.seed(seed)
+    folder = 'data'
+    nsample = 10
+    depth = 100
+
+    bm = load_barstripe((3, 3), depth)
+    num_bit = bm.circuit.num_bit
+
+    # calculate
+    grad_stat = []
+    for i in range(nsample):
+        theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
+        loss = bm.mmd_loss(theta_list)
+        grad = bm.gradient(theta_list)
+        print('grad = %s'%(grad,))
+        grad_stat.append(grad)
+    np.savetxt(os.path.join(folder, 'grads-%d.dat'%depth), grad_stat)
+
 
 if __name__ == '__main__':
     #test_dataset()
@@ -135,4 +155,5 @@ if __name__ == '__main__':
     #test_qclibd()
     #test_qclib()
     #test_train_gaussian_scipy()
-    test_train_bs()
+    #test_train_bs()
+    grad_stat_layer()
