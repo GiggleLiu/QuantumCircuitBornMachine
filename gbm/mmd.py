@@ -1,5 +1,4 @@
 import numpy as np
-from flib.fysics import fpopcount as popcount
 
 class RBFMMD2(object):
     def __init__(self, sigma_list, num_bit, is_binary):

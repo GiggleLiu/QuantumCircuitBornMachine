@@ -3,8 +3,7 @@
 import scipy as np
 import pdb
 import scipy.sparse as sps
-from scipy.sparse import linalg
-from flib.kron import kron_csr as kron
+from scipy.sparse import kron
 
 ######  Pauli Matrices  ########
 
@@ -22,7 +21,6 @@ sxyz = [I2, sx, sy, sz]
 
 def _ri(si, theta):
     return np.cos(theta/2.)*I2 - 1j*np.sin(theta/2.)*si
-    #return sps.linalg.expm(-1j / 2. * si * theta)
 
 def rx(theta):
     return _ri(sx, theta)

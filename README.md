@@ -4,7 +4,7 @@ Gradient based training of Born Machine
 ## Table of Contents
 This tutorial contains 4 sections
 
-* Building a quantum circuit with ProjectQ,
+* Building a quantum circuit,
 * Gradient checking for a quantum circuit,
 * MMD loss and Gradient for Born Machine,
 * Applications of Gaussian distribution and Bar and Stripes dataset.

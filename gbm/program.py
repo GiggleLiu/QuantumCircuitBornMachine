@@ -9,12 +9,15 @@ import scipy.sparse as sps
 from train import train
 from testsuit import load_barstripe
 
+from profilehooks import profile
+
 np.random.seed(2)
 # the testcase used in this program.
 depth = 10
 bm = load_barstripe((3, 3), depth, structure='chowliu-tree')
 
 class UI():
+    @profile
     def train(self):
         '''train this circuit.'''
         bm = load_barstripe((3, 3), depth, structure='chowliu')

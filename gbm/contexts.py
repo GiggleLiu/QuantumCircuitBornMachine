@@ -49,6 +49,8 @@ class ProjectQContext(object):
             # locations = {0: 0, 1: 1, 2: 2, 3:3} # swap order of lines 0-1-2.
             # self.backend.set_qubit_locations(locations)
         elif self.task == 'simulate':
+            print('ProjecQ should not be blamed for slow simulation,\
+in scipy context, we cached a lot gates, thus not fair for comparison.')
             self.backend = Simulator()
         elif self.task == 'ibm':
             # choose device
