@@ -60,7 +60,7 @@ class CleverBlockQueue(BlockQueue):
         for iblock, block in enumerate(self):
             # generate or use a block matrix
             num_param = block.num_param
-            if self.memo is not None and np.abs(theta_list[:num_param]-theta_last[:num_param]).sum()<1e-12:#np.allclose(theta_list[:num_param], theta_last[:num_param]):
+            if self.memo is not None and (num_param==0 or np.abs(theta_list[:num_param]-theta_last[:num_param]).max()<1e-12):#np.allclose(theta_list[:num_param], theta_last[:num_param]):
                 mat = self.memo[iblock]
                 theta_list = theta_list[num_param:]
                 theta_last = theta_last[num_param:]

@@ -146,4 +146,16 @@ subroutine fkernel_expect_bin(basis, px, py, ndim, kd, nkd, k)
         absd = popcnt(absd)
         k=k+sum(kd(absd+1)*px)*py(i)
     enddo
-endsubroutine fkernel_expect_bin
+end subroutine fkernel_expect_bin
+
+subroutine fpopcount(basis, ndim)
+    implicit none
+    integer,intent(in) :: ndim
+    integer*4,intent(in) :: basis(ndim)
+
+    integer*4 :: absd(ndim)
+    !f2py intent(in) :: basis
+    !f2py intent(out) :: absd
+
+    absd = popcnt(basis)
+end subroutine fpopcount

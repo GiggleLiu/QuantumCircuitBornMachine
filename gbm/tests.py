@@ -98,7 +98,6 @@ def test_train_gaussian_scipy():
     plt.legend(['Data', 'Gradient Born Machine'])
     pdb.set_trace()
 
-@profile
 def test_train_bs():
     np.random.seed(2)
     depth = 10
@@ -146,14 +145,13 @@ def grad_stat_layer(seed=2):
         grad_stat.append(grad)
     np.savetxt(os.path.join(folder, 'grads-%d.dat'%depth), grad_stat)
 
-
 if __name__ == '__main__':
     #test_dataset()
     #test_vcircuit()
     #test_wf()
-    #test_bm()
+    test_bm()
     #test_qclibd()
     #test_qclib()
     #test_train_gaussian_scipy()
     #test_train_bs()
-    grad_stat_layer()
+    #grad_stat_layer()

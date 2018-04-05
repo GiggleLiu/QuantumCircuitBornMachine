@@ -1,6 +1,7 @@
 import numpy as np
-from clib.popcount import inplace_popcount_32 as popcount
+#from clib.popcount import inplace_popcount_32 as popcount
 from flib.fysics import fkernel_expect_bin as fkernel
+from flib.fysics import fpopcount as popcount
 import pdb, time
 
 class RBFMMD2(object):
@@ -8,7 +9,7 @@ class RBFMMD2(object):
         self.sigma_list = sigma_list
         self.num_bit = num_bit
         self.is_binary = is_binary
-        self.basis = np.arange(2**num_bit,dtype='uint32')
+        self.basis = np.arange(2**num_bit,dtype='int32')
         self.K = mix_rbf_kernel(self.basis, self.basis, self.sigma_list, is_binary)
 
     def __call__(self, px, py):
