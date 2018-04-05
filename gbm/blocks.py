@@ -31,7 +31,8 @@ class BlockQueue(list):
 
     def __call__(self, qureg, theta_list):
         for block in self:
-            theta_list = block(qureg, theta_list)
+            theta_i, theta_list = np.split(theta_list, [block.num_param])
+            block(qureg, theta_i)
         np.testing.assert_(len(theta_list)==0)
 
     def __str__(self):
@@ -50,35 +51,41 @@ class CleverBlockQueue(BlockQueue):
     def __call__(self, qureg, theta_list):
         if not isinstance(qureg, np.ndarray):
             return super(CleverBlockQueue, self).__call__(qureg, theta_list)
-        # shall we change memo? if theta_list change <= 2 parameters, then don't touch memo.
+        # cache? if theta_list change <= 1 parameters, then don't touch memory.
         remember = self.theta_last is None or (abs(self.theta_last-theta_list)>1e-12).sum() > 1
 
         mats = []
         theta_last = self.theta_last
-        if remember: self.theta_last = theta_list.copy()
+        if remember:
+            self.theta_last = theta_list.copy()
+
         qureg_ = qureg
         for iblock, block in enumerate(self):
             # generate or use a block matrix
             num_param = block.num_param
-            if self.memo is not None and (num_param==0 or np.abs(theta_list[:num_param]-theta_last[:num_param]).max()<1e-12):#np.allclose(theta_list[:num_param], theta_last[:num_param]):
+            theta_i, theta_list = np.split(theta_list, [num_param])
+            if theta_last is not None:
+                theta_o, theta_last = np.split(theta_last, [num_param])
+            if self.memo is not None and (num_param==0 or np.abs(theta_i-theta_o).max()<1e-12):
+                # use data cached in memory
                 mat = self.memo[iblock]
-                theta_list = theta_list[num_param:]
-                theta_last = theta_last[num_param:]
             else:
                 if self.memo is not None and not remember:
-                    mat, theta_list = rot_tocsr_update1(block, self.memo[iblock], theta_last, theta_list)
+                    # update the changed gate, but not touching memory.
+                    mat = _rot_tocsr_update1(block, self.memo[iblock], theta_o, theta_i)
                 else:
-                    mat, theta_list = block.tocsr(theta_list)
-                #mat, theta_list = block.tomat(theta_list)
-                if theta_last is not None:
-                    theta_last = theta_last[num_param:]
-            #qureg_ = mat.dot(qureg_)
+                    # regenerate one
+                    mat = block.tocsr(theta_i)
             for mat_i in mat:
                 qureg_ = mat_i.dot(qureg_)
             mats.append(mat)
-        np.testing.assert_(len(theta_list)==0)
-        if remember: self.memo = mats
+
+        if remember:
+            # cache data
+            self.memo = mats
+        # update register
         qureg[...] = qureg_
+        np.testing.assert_(len(theta_list)==0)
 
 
 class ArbituaryRotation(CircuitBlock):
@@ -87,14 +94,12 @@ class ArbituaryRotation(CircuitBlock):
         self.mask = np.array([True] * (3*num_bit), dtype='bool')
 
     def __call__(self, qureg, theta_list):
-        nvar = self.mask.sum()
         gates = [Rz, Rx, Rz]
-        for i, (theta, mask) in enumerate(zip(theta_list[:nvar], self.mask)):
+        for i, (theta, mask) in enumerate(zip(theta_list, self.mask)):
             ibit, igate = i//3, i%3
             if mask:
                 gate = gates[igate](theta)
                 gate | qureg[ibit]
-        return theta_list[nvar:]
 
     def __str__(self):
         return 'Rotate[%d]'%(self.num_param)
@@ -103,23 +108,13 @@ class ArbituaryRotation(CircuitBlock):
     def num_param(self):
         return self.mask.sum()
 
-    def tomat(self, theta_list):
-        '''transform this block to csr_matrix.'''
-        nvar = self.mask.sum()
-        theta_list_ = np.zeros(3*self.num_bit)
-        theta_list_[self.mask] = theta_list[:nvar]
-        rots = [qclibd.rot(*ths) for ths in theta_list_.reshape([self.num_bit,3])]
-        res = qclibd._(rots, np.arange(self.num_bit), self.num_bit)
-        return res, theta_list[nvar:]
-
     def tocsr(self, theta_list):
         '''transform this block to csr_matrix.'''
-        nvar = self.mask.sum()
         theta_list_ = np.zeros(3*self.num_bit)
-        theta_list_[self.mask] = theta_list[:nvar]
+        theta_list_[self.mask] = theta_list
         rots = [qclibs.rot(*ths) for ths in theta_list_.reshape([self.num_bit,3])]
         res = [qclibs._([rot], [i], self.num_bit) for i,rot in enumerate(rots)]
-        return res, theta_list[nvar:]
+        return res
 
 class Entangler(CircuitBlock):
     def __init__(self, num_bit, pairs, gate, num_param_per_pair):
@@ -141,19 +136,10 @@ class Entangler(CircuitBlock):
                 theta_i, theta_list = np.split(theta_list, self.num_param_per_pair)
                 gate = self.gate(*theta_i)
             gate | (qureg[pair[0]], qureg[pair[1]])
-        return theta_list
 
     @property
     def num_param(self):
         return self.mask.sum()
-
-    def tomat(self, theta_list):
-        '''transform this block to csr_matrix.'''
-        i, j = self.pairs[0]
-        res = qclibs.CNOT(i, j, self.num_bit)
-        for i, j in self.pairs[1:]:
-            res = qclibs.CNOT(i,j,self.num_bit).dot(res)
-        return res, theta_list
 
     def tocsr(self, theta_list):
         '''transform this block to csr_matrix.'''
@@ -162,23 +148,33 @@ class Entangler(CircuitBlock):
         for i, j in self.pairs[1:]:
             res = qclibs.CNOT(i,j,self.num_bit).dot(res)
         res.eliminate_zeros()
-        return [res], theta_list
+        return [res]
 
 
-def rot_tocsr_update1(rot, old, theta_old, theta_new):
-    '''rotation layer csr_matrix update method.'''
-    nvar = rot.mask.sum()
+def _rot_tocsr_update1(rot, old, theta_old, theta_new):
+    '''
+    rotation layer csr_matrix update method.
+    
+    Args:
+        rot (ArbituaryRotation): rotatio layer.
+        old (csr_matrix): old matrices.
+        theta_old (1darray): old parameters.
+        theta_new (1darray): new parameters.
+
+    Returns:
+        csr_matrix: new rotation matrices after the theta changed.
+    '''
     idiff_param = np.where(abs(theta_old-theta_new)>1e-12)[0].item()
     idiff = np.where(rot.mask)[0][idiff_param]
 
     # get rotation parameters
     isite = idiff//3
     theta_list_ = np.zeros(3*rot.num_bit)
-    theta_list_[rot.mask] = theta_new[:nvar]
+    theta_list_[rot.mask] = theta_new
 
     new = old[:]
     new[isite] = qclibs._(qclibs.rot(*theta_list_[isite*3:isite*3+3]), isite, rot.num_bit)
-    return new, theta_new[nvar:]
+    return new
 
 
 def const_entangler(num_bit, pairs, gate):
@@ -200,13 +196,12 @@ class BondTimeEvolution(CircuitBlock):
         self.mask = np.array([True]*len(pairs),dtype='bool')
 
     def __call__(self, qureg, theta_list):
-        npar = len(self.pairs)
-        for pair, ti, mask_bi in zip(self.pairs, theta_list[:npar], self.mask):
+        for pair, ti, mask_bi in zip(self.pairs, theta_list, self.mask):
             if mask_bi:
                 hamiltonian = self.hamiltonian.replace('i', str(pair[0])).replace('j', str(pair[1]))
                 gate = TimeEvolution(ti, QubitOperator(hamiltonian))
                 gate | qureg
-        return theta_list[npar:]
+        return theta_list
 
     def __str__(self):
         pair_str = ','.join(['%d-%d'%(i,j) for i,j in self.pairs])
@@ -215,26 +210,6 @@ class BondTimeEvolution(CircuitBlock):
     @property
     def num_param(self):
         return sum(self.mask)
-
-def get_nn_pairs(geometry):
-    '''define pairs that cnot gates will apply.'''
-    num_bit = np.prod(geometry)
-    if len(geometry) == 2:
-        nrow, ncol = geometry
-        res = []
-        for ij in range(num_bit):
-            i, j = ij // ncol, ij % ncol
-            res.extend([(ij, i_ * ncol + j_)
-                        for i_, j_ in [((i + 1) % nrow, j), (i, (j + 1) % ncol)]])
-        return res
-    elif len(geometry) == 1:
-        res = []
-        for inth in range(2):
-            for i in range(inth, num_bit, 2):
-                res = res + [(i, i_ % num_bit) for i_ in range(i + 1, i + 2)]
-        return res
-    else:
-       raise NotImplementedError('')
 
 def get_demo_circuit(num_bit, depth, pairs):
     blocks = []

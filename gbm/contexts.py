@@ -4,7 +4,6 @@ Context for applying gates.
 
 import numpy as np
 import os
-import pdb
 
 from projectq.cengines import MainEngine
 from projectq.backends import CircuitDrawer, Simulator, IBMBackend
@@ -15,7 +14,7 @@ from utils import openfile
 TEX_FOLDER = 'data'
 TEX_FILENAME = '_temp.tex'
 
-class CircuitContext(object):
+class ProjectQContext(object):
     '''
     Context for running circuits.
 

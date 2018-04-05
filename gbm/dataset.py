@@ -2,8 +2,7 @@ from __future__ import division
 import pdb
 import numpy as np
 
-from utils import packnbits, unpacknbits, sample_from_prob
-from barstripe import is_bs
+from utils import packnbits, unpacknbits
 
 def digit_basis(geometry):
     num_bit = np.prod(geometry)
@@ -29,3 +28,7 @@ def barstripe_pdf(geometry):
     x = binary_basis(geometry)
     pl = is_bs(x)
     return pl/pl.sum()
+
+def is_bs(samples):
+    '''a sample is a bar or a stripe.'''
+    return (np.abs(np.diff(samples,axis=-1)).sum(axis=(1,2))==0)|((np.abs(np.diff(samples, axis=1)).sum(axis=(1,2)))==0)

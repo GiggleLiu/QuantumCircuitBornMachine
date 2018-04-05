@@ -2,7 +2,7 @@ import numpy as np
 import time, pdb
 import traceback
 
-from contexts import CircuitContext, ScipyContext
+from contexts import ScipyContext, ProjectQContext
 
 class BornMachine(object):
     '''
@@ -24,31 +24,19 @@ class BornMachine(object):
     def depth(self):
         return (len(self.circuit)-1)//2
 
-    def set_context(self, context):
-        if context == 'scipy':
-            self.context = ScipyContext
-        elif context == 'projectq':
-            self.context = CircuitContext
-        else:
-            raise
-
     def viz(self, theta_list=None):
         '''visualize this Born Machine'''
+        if not self.context == ProjectQContext:
+            raise AttributeError('Can not visualize, unless you use projectQ context.')
         if theta_list is None:
-            theta_list = np.random.random(circuit.num_param)*2*np.pi
+            theta_list = np.zeros(self.circuit.num_param)
         with self.context( self.circuit.num_bit, 'draw') as cc:
             self.circuit(cc.qureg, theta_list)
 
     def pdf(self, theta_list):
         '''get probability distribution function'''
-        cc = self.context( self.circuit.num_bit, 'simulate')
-        cc = cc.__enter__()
-        t0=time.time()
-        self.circuit(cc.qureg, theta_list)
-        t1=time.time()
-        cc = cc.__exit__()
-        t2=time.time()
-        #print(t1-t0,t2-t1)
+        with self.context( self.circuit.num_bit, 'simulate') as cc:
+            self.circuit(cc.qureg, theta_list)
         pl = np.abs(cc.wf)**2
         # introducing sampling error
         if self.batch_size is not None:
@@ -71,7 +59,7 @@ class BornMachine(object):
         '''
         prob = self._prob
         grad = []
-        def get1(i):
+        for i in range(len(theta_list)):
             theta_list_ = theta_list.copy()
             # pi/2 phase
             theta_list_[i] += np.pi/2.
@@ -82,10 +70,8 @@ class BornMachine(object):
 
             grad_pos = self.mmd.kernel_expect(prob, prob_pos) - self.mmd.kernel_expect(prob, prob_neg)
             grad_neg = self.mmd.kernel_expect(self.p_data, prob_pos) - self.mmd.kernel_expect(self.p_data, prob_neg)
-            return grad_pos - grad_neg
+            grad.append(grad_pos - grad_neg)
 
-        from mpiutils import mpido
-        grad = mpido(get1, inputlist=np.arange(len(theta_list)))
         return np.array(grad)
 
     def gradient_numerical(self, theta_list, delta=1e-2):

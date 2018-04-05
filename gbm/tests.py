@@ -7,7 +7,7 @@ from profilehooks import profile
 import scipy.sparse as sps
 
 from blocks import get_demo_circuit, get_nn_pairs
-from dataset import gaussian_pdf, barstripe_pdf, digit_basis, binary_basis
+from dataset import gaussian_pdf, barstripe_pdf
 from gbm import BornMachine
 from contexts import CircuitContext
 from mmd import RBFMMD2
@@ -24,18 +24,6 @@ def test_dataset():
     plt.plot(pl2)
     plt.ylim(0,0.01)
     plt.show()
-
-def test_vcircuit():
-    depth = 2
-    geometry = (6,)
-
-    num_bit = np.prod(geometry)
-    pairs = get_nn_pairs(geometry)
-    circuit = get_demo_circuit(num_bit, depth, pairs)
-    theta_list = np.zeros(circuit.num_param)
-
-    with CircuitContext('draw', num_bit) as cc:
-        circuit(cc.qureg, theta_list)
 
 def test_bm():
     depth = 2
