@@ -46,9 +46,11 @@ def load_barstripe(geometry, depth, context='scipy', structure='nn'):
         pairs = random_tree()
     elif structure == 'chowliu-tree':
         pairs = chowliu_tree(p_bs)
-    else:
+    elif structure == 'nn':
         # nearest neighbor
         pairs = nearest_neighbor(geometry)
+    else:
+        raise ValueError('unknown entangle structure %s!'%structure)
     circuit = get_demo_circuit(num_bit, depth, pairs)
 
     # mmd loss

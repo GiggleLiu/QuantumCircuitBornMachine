@@ -57,7 +57,11 @@ class BornMachine(object):
         '''
         cheat and get gradient.
         '''
-        prob = self._prob
+        # for stability consern, we do not use the cached probability output.
+        prob = self.pdf(theta_list)
+        # for performance consern in real training, prob can be reused!
+        #prob = self._prob
+
         grad = []
         for i in range(len(theta_list)):
             theta_list_ = theta_list.copy()

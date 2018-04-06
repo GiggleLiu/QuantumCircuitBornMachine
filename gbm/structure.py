@@ -1,3 +1,7 @@
+'''
+Structures for entangle layers.
+'''
+
 import numpy as np
 from scipy.sparse.csgraph import minimum_spanning_tree
 

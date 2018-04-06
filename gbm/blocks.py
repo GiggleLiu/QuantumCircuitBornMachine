@@ -5,6 +5,9 @@ import qclibd, qclibs
 import pdb
 
 class CircuitBlock(object):
+    '''
+    the building block of a circuit. This is an abstract class.
+    '''
     def __init__(self, num_bit):
         self.num_bit = num_bit
 
@@ -20,7 +23,29 @@ class CircuitBlock(object):
         '''
         pass
 
+    @property
+    def num_param(self):
+        '''
+        number of parameters it consume.
+        '''
+        pass
+
+    def tocsr(self, theta_list):
+        '''
+        build this block into a sequence of csr_matrices.
+
+        Args:
+            theta_list (1darray): parameters,
+
+        Returns:
+            list: a list of csr_matrices, apply them on a vector to perform operation.
+        '''
+        pass
+
 class BlockQueue(list):
+    '''
+    BlockQueue is a sequence of CircuitBlock instances.
+    '''
     @property
     def num_bit(self):
         return self[0].num_bit
@@ -116,30 +141,22 @@ class ArbituaryRotation(CircuitBlock):
         res = [qclibs._([rot], [i], self.num_bit) for i,rot in enumerate(rots)]
         return res
 
-class Entangler(CircuitBlock):
-    def __init__(self, num_bit, pairs, gate, num_param_per_pair):
-        super(Entangler, self).__init__(num_bit)
+class CNOTEntangler(CircuitBlock):
+    def __init__(self, num_bit, pairs):
+        super(CNOTEntangler, self).__init__(num_bit)
         self.pairs = pairs
-        self.gate = gate
-        self.num_param_per_pair = num_param_per_pair
-        self.mask = np.array([True]*(num_bit*num_param_per_pair), dtype='bool')
 
     def __str__(self):
         pair_str = ','.join(['%d-%d'%(i,j) for i,j in self.pairs])
-        return '%s(%s)'%(self.gate, pair_str)
+        return 'CNOT(%s)'%(pair_str)
 
-    def __call__(self, qureg, theta_list):
+    def __call__(self, qureg, *args, **kwargs):
         for pair in self.pairs:
-            if self.num_param_per_pair == 0:
-                gate = self.gate
-            else:
-                theta_i, theta_list = np.split(theta_list, self.num_param_per_pair)
-                gate = self.gate(*theta_i)
-            gate | (qureg[pair[0]], qureg[pair[1]])
+            CNOT | (qureg[pair[0]], qureg[pair[1]])
 
     @property
     def num_param(self):
-        return self.mask.sum()
+        return 0
 
     def tocsr(self, theta_list):
         '''transform this block to csr_matrix.'''
@@ -176,48 +193,13 @@ def _rot_tocsr_update1(rot, old, theta_old, theta_new):
     new[isite] = qclibs._(qclibs.rot(*theta_list_[isite*3:isite*3+3]), isite, rot.num_bit)
     return new
 
-
-def const_entangler(num_bit, pairs, gate):
-    return Entangler(num_bit, pairs, gate, 0)
-
-def cnot_entangler(num_bit, pairs):
-    '''controled-not entangler.'''
-    return Entangler(num_bit, pairs, CNOT, 0)
-
-def cz_entangler(num_bit, pairs):
-    '''controled-Z entangler.'''
-    return Entangler(num_bit, pairs, C(Z), 1)
-
-class BondTimeEvolution(CircuitBlock):
-    def __init__(self, num_bit, pairs, hamiltonian):
-        super(BondTimeEvolution, self).__init__(num_bit)
-        self.pairs = pairs
-        self.hamiltonian = hamiltonian
-        self.mask = np.array([True]*len(pairs),dtype='bool')
-
-    def __call__(self, qureg, theta_list):
-        for pair, ti, mask_bi in zip(self.pairs, theta_list, self.mask):
-            if mask_bi:
-                hamiltonian = self.hamiltonian.replace('i', str(pair[0])).replace('j', str(pair[1]))
-                gate = TimeEvolution(ti, QubitOperator(hamiltonian))
-                gate | qureg
-        return theta_list
-
-    def __str__(self):
-        pair_str = ','.join(['%d-%d'%(i,j) for i,j in self.pairs])
-        return '%s[%s](t)'%(self.hamiltonian, pair_str)
-
-    @property
-    def num_param(self):
-        return sum(self.mask)
-
 def get_demo_circuit(num_bit, depth, pairs):
     blocks = []
     # build circuit
     for idepth in range(depth+1):
         blocks.append(ArbituaryRotation(num_bit))
         if idepth!=depth:
-            blocks.append(cnot_entangler(num_bit, pairs))
+            blocks.append(CNOTEntangler(num_bit, pairs))
 
     # set leading and trailing Rz to disabled
     blocks[0].mask[::3] = False
