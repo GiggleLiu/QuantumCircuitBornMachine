@@ -1,5 +1,5 @@
-# Gradient Born Machine: Tutorial
-Gradient based training of Born Machine
+# Quantum Circuit Born Machine: Tutorial
+Gradient based training of Quantum Circuit Born Machine (QCBM)
 
 ## Table of Contents
 This tutorial contains 4 sections
@@ -38,7 +38,7 @@ Clone this repository [https://github.com/GiggleLiu/gbm.git](https://github.com/
 ## Documentations
 
 * paper: *to be added*
-* slides: *to be added*
+* slides: *to be added* $x^2$
 
 ## Authors
 
