@@ -2,14 +2,11 @@
 Gradient based training of Quantum Circuit Born Machine (QCBM)
 
 ## Table of Contents
-This tutorial contains 4 sections
+This project contains
 
-* Building a quantum circuit,
-* Gradient checking for a quantum circuit,
-* MMD loss and Gradient for Born Machine,
-* Applications of Gaussian distribution and Bar and Stripes dataset.
-
-Its online version is to be released.
+* Basic tutorial of training 6 bit Gaussian distribution using QCBM: `notebooks/qcbm_gaussian.ipynb` (or [online](https://drive.google.com/file/d/1LfvWuM8rUPOtdWFRbUhSyjn35ndR7OW6/view?usp=sharing))
+* `notebooks/qcbm_advanced`, an advanced tutorial.
+* `qcbm` folder, a python project for productivity purpose.
 
 ## Preparations
 You may use **either** local or online accesses to our python notebooks.
@@ -43,3 +40,4 @@ Clone this repository [https://github.com/GiggleLiu/gbm.git](https://github.com/
 ## Authors
 
 * Jin-Guo Liu <cacate0129@iphy.ac.cn>
+* Lei Wang <wanglei@iphy.ac.cn>

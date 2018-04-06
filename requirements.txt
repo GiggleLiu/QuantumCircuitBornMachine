@@ -3,4 +3,3 @@ scipy
 numpy
 matplotlib
 git+https://github.com/BRML/climin.git
-projectq
