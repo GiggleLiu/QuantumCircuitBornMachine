@@ -26,7 +26,7 @@ $ conda install -c conda-forge pybind11
 $ pip install -r requirements.txt
 ```
 
-Clone this repository [https://github.com/GiggleLiu/gbm.git](https://github.com/GiggleLiu/gbm.git) to your local host.
+Clone this repository [https://github.com/GiggleLiu/QuantumCircuitBornMachine.git](https://github.com/GiggleLiu/QuantumCircuitBornMachine.git) to your local host.
 
 ### Online
 1. Sign up and sign in [Google drive](https://drive.google.com/)

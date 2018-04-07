@@ -10,6 +10,11 @@ from qcbm import train
 from qcbm.testsuit import load_barstripe
 
 np.random.seed(2)
+try:
+    os.mkdir('data')
+except:
+    pass
+
 # the testcase used in this program.
 depth = 7
 geometry = (2,3)
@@ -27,7 +32,7 @@ class UI():
     def train(self):
         '''train this circuit.'''
         theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
-        loss, theta_list = train(bm, theta_list, 'L-BFGS-B', max_iter=200)
+        loss, theta_list = train(bm, theta_list, 'L-BFGS-B', max_iter=100)
         # save
         np.savetxt('data/loss-cl.dat', bm._loss_histo)
         np.savetxt('data/theta-cl.dat', theta_list)
@@ -47,9 +52,9 @@ class UI():
             theta_list = np.loadtxt('data/theta-cl.dat')
             plt.plot(pl0)
             pl = bm.pdf(theta_list)
+            plt.plot(pl)
         except:
-            print('No Born Machine Data')
-        plt.plot(pl)
+            print('Warning, No Born Machine Data')
         plt.legend(['Data', 'Born Machine'])
         plt.show()
 
@@ -60,7 +65,11 @@ class UI():
         import matplotlib.pyplot as plt
         # generate samples
         size = (7,5)
-        theta_list = np.loadtxt('data/theta-cl.dat')
+        try:
+            theta_list = np.loadtxt('data/theta-cl.dat')
+        except:
+            print('run `./program.py train` before generating data!')
+            return
         pl = bm.pdf(theta_list)
         indices = np.random.choice(np.arange(len(pl)), np.prod(size), p=pl)
         samples = binary_basis(geometry)[indices]
