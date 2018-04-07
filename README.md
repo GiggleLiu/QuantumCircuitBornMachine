@@ -8,7 +8,7 @@ This project contains
 * `notebooks/qcbm_advanced.ipynb` (or [online](https://drive.google.com/file/d/1cA5niJga7aLcJqIdBtpGV9i0vyOen1Aq/view?usp=sharing)), an advanced tutorial,
 * `qcbm` folder, a simple python project for productivity purpose.
 
-## Preparations
+## Setup Guide
 You may use **either** local or online accesses to our python notebooks.
 
 ### Local
@@ -20,7 +20,7 @@ Set up your python environment
 If you want to read notebooks only and do not want to use features like [`projectq`](https://github.com/ProjectQ-Framework/ProjectQ), having `numpy`, `scipy` and `matplotlib` is enough.
 To access advanced features, you should install `fire`, `projectq` and `climin`.
 ```bash
-$ conda install pybind11
+$ conda install -c conda-forge pybind11
 $ pip install -r requirements.txt
 ```
 
@@ -35,7 +35,7 @@ Clone this repository [https://github.com/GiggleLiu/gbm.git](https://github.com/
     - search "Colaboratory" and "CONNECT"
 3. You can make a copy of notebook to your google drive (File Menu) to save your edits.
 
-## Run Bar-and-Stripes Demo at Your Localhost
+## Run Bar-and-Stripes Demo on Your Localhost
 
 ```bash
 $ ./program.py checkgrad  # check the correctness of gradient
