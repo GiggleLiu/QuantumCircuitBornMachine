@@ -8,6 +8,8 @@ This project contains
 * `notebooks/qcbm_advanced.ipynb` (or [online](https://drive.google.com/file/d/1cA5niJga7aLcJqIdBtpGV9i0vyOen1Aq/view?usp=sharing)), an advanced tutorial,
 * `qcbm` folder, a simple python project for productivity purpose.
 
+![](docs/images/qcbm.png)
+
 ## Setup Guide
 You may use **either** local or online accesses to our python notebooks.
 
