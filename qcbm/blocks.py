@@ -1,5 +1,10 @@
-from projectq.ops import *
+'''quantum circuit building blocks.'''
+import numpy as np
 from functools import reduce
+try:
+    from projectq.ops import *
+except:
+    print('warning: fail to import projectq')
 
 from . import qclibs
 
