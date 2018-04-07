@@ -5,11 +5,14 @@ Context for applying gates.
 import numpy as np
 import os
 
-from projectq.cengines import MainEngine
-from projectq.backends import CircuitDrawer, Simulator, IBMBackend
-from projectq.ops import Measure
+try:
+    from projectq.cengines import MainEngine
+    from projectq.backends import CircuitDrawer, Simulator, IBMBackend
+    from projectq.ops import Measure
+except:
+    print('warning: fail to import projectq')
 
-from utils import openfile
+from .utils import openfile
 
 TEX_FOLDER = 'data'
 TEX_FILENAME = '_temp.tex'

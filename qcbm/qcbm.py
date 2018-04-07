@@ -1,12 +1,14 @@
+'''
+Quantum Circuit Born Machine training framework.
+'''
+
 import numpy as np
-import time, pdb
-import traceback
 
-from contexts import ScipyContext, ProjectQContext
+from .contexts import ScipyContext, ProjectQContext
 
-class BornMachine(object):
+class QCBM(object):
     '''
-    Born Machine,
+    Quantum Circuit Born Machine,
 
     Args:
         circuit (BlockQueue): the circuit architechture.

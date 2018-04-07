@@ -5,12 +5,12 @@ Several Models used for testing.
 import numpy as np
 from scipy.sparse.csgraph import minimum_spanning_tree
 
-from blocks import get_demo_circuit
-from dataset import gaussian_pdf, barstripe_pdf
-from gbm import BornMachine
-from mmd import RBFMMD2
-from structure import chowliu_tree, nearest_neighbor, random_tree
-from contexts import ProjectQContext
+from .blocks import get_demo_circuit
+from .dataset import gaussian_pdf, barstripe_pdf
+from .qcbm import QCBM
+from .mmd import RBFMMD2
+from .structure import chowliu_tree, nearest_neighbor, random_tree
+from .contexts import ProjectQContext
 
 
 def load_gaussian(num_bit, depth, context='scipy'):
@@ -29,7 +29,7 @@ def load_gaussian(num_bit, depth, context='scipy'):
     mmd = RBFMMD2([0.25,4], num_bit, False)
 
     # Born Machine
-    bm = BornMachine(circuit, mmd, p_bs)
+    bm = QCBM(circuit, mmd, p_bs)
     if context == 'projectq':
         bm.context = ProjectQContext
     return bm
@@ -57,7 +57,7 @@ def load_barstripe(geometry, depth, context='scipy', structure='nn'):
     mmd = RBFMMD2([0.5], num_bit, True)
 
     # Born Machine
-    bm = BornMachine(circuit, mmd, p_bs)
+    bm = QCBM(circuit, mmd, p_bs)
     if context == 'projectq':
         bm.context = ProjectQContext
     return bm

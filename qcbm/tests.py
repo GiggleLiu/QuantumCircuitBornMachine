@@ -3,27 +3,21 @@ from numpy.testing import dec, assert_, assert_raises,\
     assert_almost_equal, assert_allclose
 import matplotlib.pyplot as plt
 import pdb, os
-from profilehooks import profile
 import scipy.sparse as sps
 
-from blocks import get_demo_circuit, get_nn_pairs
-from dataset import gaussian_pdf, barstripe_pdf
-from gbm import BornMachine
-from contexts import CircuitContext
-from mmd import RBFMMD2
-from train import train
-from testsuit import load_gaussian, load_barstripe
-from qclibs import rot, CNOT, ry, I2
-import qclibd
+from .blocks import get_demo_circuit
+from .structure import nearest_neighbor
+from .dataset import gaussian_pdf, barstripe_pdf
+from .contexts import ProjectQContext, ScipyContext
+from .mmd import RBFMMD2
+from .train import train
+from .testsuit import load_gaussian, load_barstripe
+from .qclibs import rot, CNOT, ry, I2
 
 def test_dataset():
     geometry = (3,3)
-    pl1 = gaussian_pdf(geometry, mu=0, sigma=255.5)
     pl2 = barstripe_pdf(geometry)
-    plt.plot(pl1)
-    plt.plot(pl2)
-    plt.ylim(0,0.01)
-    plt.show()
+    assert_((pl2>1e-5).sum()==14)
 
 def test_bm():
     depth = 2
@@ -34,73 +28,26 @@ def test_bm():
     theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
 
     assert_(bm.depth == depth)
-    print(bm.mmd_loss(theta_list))
+    print('loss = %s'%bm.mmd_loss(theta_list))
     g1 = bm.gradient(theta_list)
     g2 = bm.gradient_numerical(theta_list)
     assert_allclose(g1, g2, atol=1e-5)
 
 def test_wf():
-    depth = 2
+    depth = 0
     geometry = (6,)
 
     num_bit = np.prod(geometry)
-    pairs = get_nn_pairs(geometry)
+    pairs = nearest_neighbor(geometry)
     circuit = get_demo_circuit(num_bit, depth, pairs)
 
-    with CircuitContext('simulate', np.prod(geometry)) as cc:
+    # cross check
+    theta_list = np.random.random(circuit.num_param)
+    with ScipyContext(np.prod(geometry)) as cc2:
+        circuit(cc2.qureg, theta_list)
+    with ProjectQContext(np.prod(geometry), 'simulate') as cc:
         circuit(cc.qureg, theta_list)
-
-    wf = np.zeros(2**num_bit)
-    wf[0] = 1
-    assert_allclose(cc.wf, wf)
-
-def test_train_gaussian():
-    depth = 6
-    np.random.seed(2)
-
-    bm = load_gaussian(6, depth, 'projectq')
-    theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
-    loss, theta_list = train(bm, theta_list, 'L-BFGS-B', max_iter=20)
-    pl = bm.pdf(theta_list)
-
-    # display
-    plt.ion()
-    plt.plot(bm.p_data)
-    plt.plot(pl)
-    plt.legend(['Data', 'Gradient Born Machine'])
-    pdb.set_trace()
-
-def test_train_gaussian_scipy():
-    depth = 6
-    np.random.seed(2)
-
-    bm = load_gaussian(6, depth)
-    theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
-    loss, theta_list = train(bm, theta_list, 'L-BFGS-B', max_iter=20)
-    pl = bm.pdf(theta_list)
-
-    # display
-    plt.ion()
-    plt.plot(bm.p_data)
-    plt.plot(pl)
-    plt.legend(['Data', 'Gradient Born Machine'])
-    pdb.set_trace()
-
-def test_train_bs():
-    np.random.seed(2)
-    depth = 10
-
-    bm = load_barstripe((3, 4), depth)
-    theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
-    loss, theta_list = train(bm, theta_list, 'L-BFGS-B', max_iter=200)
-    pl = bm.pdf(theta_list)
-
-    # display
-    plt.ion()
-    plt.plot(bm.p_data)
-    plt.plot(pl)
-    plt.legend(['Data', 'Gradient Born Machine'])
-    pdb.set_trace()
+    assert_allclose(cc.wf, cc2.wf)
 
 def test_qclib():
     cnot = CNOT(1,0,2)
@@ -108,38 +55,8 @@ def test_qclib():
     assert_allclose(cnot.toarray(), sps.coo_matrix(([1,1,1,1],([0,1,2,3],[0,1,3,2]))).toarray())
     assert_allclose(rot(-np.pi/2.,np.pi/4.,np.pi/2.).toarray(),ry(np.pi/4.).toarray())
 
-def test_qclibd():
-    cnot = qclibd.CNOT(1,0,2)
-    assert_allclose(cnot, sps.coo_matrix(([1,1,1,1],([0,1,2,3],[0,1,3,2]))).toarray())
-    assert_allclose(qclibd.rot(-np.pi/2.,np.pi/4.,np.pi/2.),qclibd.ry(np.pi/4.))
-
-def grad_stat_layer(seed=2):
-    '''layerwise gradient statistics'''
-    np.random.seed(seed)
-    folder = 'data'
-    nsample = 10
-    depth = 100
-
-    bm = load_barstripe((3, 3), depth)
-    num_bit = bm.circuit.num_bit
-
-    # calculate
-    grad_stat = []
-    for i in range(nsample):
-        theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
-        loss = bm.mmd_loss(theta_list)
-        grad = bm.gradient(theta_list)
-        print('grad = %s'%(grad,))
-        grad_stat.append(grad)
-    np.savetxt(os.path.join(folder, 'grads-%d.dat'%depth), grad_stat)
-
 if __name__ == '__main__':
-    #test_dataset()
-    #test_vcircuit()
-    #test_wf()
+    test_dataset()
+    test_wf()
     test_bm()
-    #test_qclibd()
-    #test_qclib()
-    #test_train_gaussian_scipy()
-    #test_train_bs()
-    #grad_stat_layer()
+    test_qclib()

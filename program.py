@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 '''
-Learning 3 x 3 bar and stripe using Born Machine.
+Learning 2 x 3 bar and stripe using Born Machine.
 '''
 import numpy as np
 import pdb, os, fire
 import scipy.sparse as sps
 
-from train import train
-from testsuit import load_barstripe
+from qcbm import train
+from qcbm.testsuit import load_barstripe
 
 np.random.seed(2)
 # the testcase used in this program.
-depth = 10
-geometry = (3,3)
+depth = 7
+geometry = (2,3)
 bm = load_barstripe(geometry, depth, structure='chowliu-tree')
 
 class UI():
@@ -29,22 +29,22 @@ class UI():
         theta_list = np.random.random(bm.circuit.num_param)*2*np.pi
         loss, theta_list = train(bm, theta_list, 'L-BFGS-B', max_iter=200)
         # save
-        np.savetxt('loss-cl.dat', bm._loss_histo)
-        np.savetxt('theta-cl.dat', theta_list)
+        np.savetxt('data/loss-cl.dat', bm._loss_histo)
+        np.savetxt('data/theta-cl.dat', theta_list)
 
     def vcircuit(self):
         '''visualize circuit of Born Machine.'''
-        from contexts import ProjectQContext
+        from qcbm import ProjectQContext
         bm.context = ProjectQContext
         bm.viz()
 
     def vpdf(self):
         '''visualize probability densitys'''
         import matplotlib.pyplot as plt
-        from dataset import barstripe_pdf
+        from qcbm.dataset import barstripe_pdf
         pl0 = barstripe_pdf(geometry)
         try:
-            theta_list = np.loadtxt('theta-cl.dat')
+            theta_list = np.loadtxt('data/theta-cl.dat')
             plt.plot(pl0)
             pl = bm.pdf(theta_list)
         except:
@@ -54,40 +54,31 @@ class UI():
         plt.show()
 
     def generate(self):
-        # show generated samples
-        from dataset import binary_basis
-        from utils import sample_from_prob
+        '''show generated samples for bar and stripes'''
+        from qcbm.dataset import binary_basis
+        from qcbm.utils import sample_from_prob
         import matplotlib.pyplot as plt
-        size = (7,7)
-        theta_list = np.loadtxt('theta-cl.dat')
+        # generate samples
+        size = (7,5)
+        theta_list = np.loadtxt('data/theta-cl.dat')
         pl = bm.pdf(theta_list)
         indices = np.random.choice(np.arange(len(pl)), np.prod(size), p=pl)
-        samples = binary_basis((3,3))[indices]
+        samples = binary_basis(geometry)[indices]
 
-        plt.ion()
+        # show
         fig = plt.figure(figsize=(5,4))
-        width = 0.08
-        height = 0.12
-        spacex = 0.02
-        spacey = 0.02
-        row_space = 0.025
+        gs = plt.GridSpec(*size)
         for i in range(size[0]):
             for j in range(size[1]):
-                left = 0.17+(width+spacey)*j
-                bottom = 0.85-(height+spacex)*i
-                ax2 = fig.add_axes([left, bottom, width, height])
-
-                ax2.imshow(samples[i*size[1]+j], vmin=0, vmax=1)
-                ax2.axis('off')
-        pdb.set_trace()
+                plt.subplot(gs[i,j]).imshow(samples[i*size[1]+j], vmin=0, vmax=1)
+                plt.axis('equal')
+                plt.axis('off')
+        plt.show()
 
     def statgrad(self):
         '''layerwise gradient statistics'''
         import matplotlib.pyplot as plt
         nsample = 10
-
-        bm = load_barstripe((3, 3), depth)
-        num_bit = bm.circuit.num_bit
 
         # calculate
         grad_stat = [[] for i in range(depth+1)]
@@ -105,10 +96,12 @@ class UI():
         var_list = []
         for grads in grad_stat[1:-1]:
             var_list.append(np.abs(grads).mean())
+
+        plt.figure(figsize=(5,4))
         plt.plot(range(1,depth), var_list)
         plt.ylabel('Gradient Std. Err.')
         plt.xlabel('Depth')
-        plt.ylim(0,1e-3)
+        plt.ylim(0,np.max(var_list)*1.2)
         plt.show()
 
 if __name__ == '__main__':

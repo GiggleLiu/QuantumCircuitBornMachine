@@ -1,4 +1,8 @@
-'''elementary library for quantum computation.'''
+'''
+elementary library for quantum computation.
+
+the scipy sparse matrix version.
+'''
 
 import scipy as np
 import pdb

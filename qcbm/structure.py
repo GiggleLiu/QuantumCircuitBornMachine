@@ -15,7 +15,7 @@ def chowliu_tree(pdata):
     Returns:
         list: entangle pairs.
     '''
-    X = mutual_table(pdata)
+    X = mutual_information(pdata)
     Tcsr = -minimum_spanning_tree(-X)
     Tcoo = Tcsr.tocoo()
     pairs = list(zip(Tcoo.row, Tcoo.col))
@@ -58,7 +58,7 @@ def nearest_neighbor(geometry):
     else:
        raise NotImplementedError('')
 
-def mutual_table(pdata):
+def mutual_information(pdata):
     '''
     calculate mutual information I = \sum\limits_{x,y} p(x,y) log[p(x,y)/p(x)/p(y)]
 

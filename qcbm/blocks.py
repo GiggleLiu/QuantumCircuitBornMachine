@@ -1,8 +1,7 @@
 from projectq.ops import *
 from functools import reduce
 
-import qclibd, qclibs
-import pdb
+from . import qclibs
 
 class CircuitBlock(object):
     '''
@@ -120,7 +119,9 @@ class ArbituaryRotation(CircuitBlock):
 
     def __call__(self, qureg, theta_list):
         gates = [Rz, Rx, Rz]
-        for i, (theta, mask) in enumerate(zip(theta_list, self.mask)):
+        theta_list_ = np.zeros(self.num_bit*3)
+        theta_list_[self.mask] = theta_list
+        for i, (theta, mask) in enumerate(zip(theta_list_, self.mask)):
             ibit, igate = i//3, i%3
             if mask:
                 gate = gates[igate](theta)

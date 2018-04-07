@@ -1,8 +1,6 @@
-from __future__ import division
-import pdb
 import numpy as np
 
-from utils import packnbits, unpacknbits
+from .utils import packnbits, unpacknbits
 
 def digit_basis(geometry):
     num_bit = np.prod(geometry)
