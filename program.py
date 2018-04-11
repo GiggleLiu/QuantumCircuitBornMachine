@@ -48,9 +48,9 @@ class UI():
         import matplotlib.pyplot as plt
         from qcbm.dataset import barstripe_pdf
         pl0 = barstripe_pdf(geometry)
+        plt.plot(pl0)
         try:
             theta_list = np.loadtxt('data/theta-cl.dat')
-            plt.plot(pl0)
             pl = bm.pdf(theta_list)
             plt.plot(pl)
         except:
