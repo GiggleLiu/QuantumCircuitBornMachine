@@ -52,8 +52,7 @@ class ProjectQContext(object):
             # locations = {0: 0, 1: 1, 2: 2, 3:3} # swap order of lines 0-1-2.
             # self.backend.set_qubit_locations(locations)
         elif self.task == 'simulate':
-            print('ProjecQ should not be blamed for slow simulation,\
-in scipy context, we cached a lot gates, thus not fair for comparison.')
+            print('ProjecQ simulation in training can be slow, since in scipy context, we cached a lot gates.')
             self.backend = Simulator()
         elif self.task == 'ibm':
             # choose device
@@ -79,7 +78,7 @@ in scipy context, we cached a lot gates, thus not fair for comparison.')
         self.qureg = self.eng.allocate_qureg(self.num_bit)
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, exc_type, exc_val, traceback):
         '''
         exit, meanwhile cheat and get wave function.
 
@@ -87,12 +86,16 @@ in scipy context, we cached a lot gates, thus not fair for comparison.')
             wf (1darray): for 'simulate' task, the wave function vector.
             res (1darray): for 'ibm' task, the measurements output.
         '''
+        if traceback is not None:
+            return False
         if self.task == 'draw':
             self._viz_circuit()
         elif self.task == 'simulate':
             self.eng.flush()
             order, qvec = self.backend.cheat()
             self.wf = np.array(qvec)
+            order = [order[i] for i in range(len(self.qureg))]
+            self.wf = np.transpose(self.wf.reshape([2]*len(self.qureg), order='F'), axes=order).ravel(order='F')
             Measure | self.qureg
             self.eng.flush()
         elif self.task == 'ibm':
@@ -145,7 +148,7 @@ class ScipyContext(object):
         self.qureg[0] = 1
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, exc_type, exc_val, traceback):
         '''
         exit, meanwhile cheat and get wave function.
 
@@ -153,5 +156,7 @@ class ScipyContext(object):
             wf (1darray): for 'simulate' task, the wave function vector.
             res (1darray): for 'ibm' task, the measurements output.
         '''
+        if traceback is not None:
+            return False
         self.wf = self.qureg
         return self
