@@ -11,9 +11,6 @@ This project contains
 ![](docs/images/qcbm.png)
 
 ## Setup Guide
-You may use **either** local or online accesses to our python notebooks.
-
-### Local
 Set up your python environment
 
 * python 3.6
@@ -28,7 +25,7 @@ $ pip install -r requirements.txt
 
 Clone this repository [https://github.com/GiggleLiu/QuantumCircuitBornMachine.git](https://github.com/GiggleLiu/QuantumCircuitBornMachine.git) to your local host.
 
-### Online
+### Access online materials
 1. Sign up and sign in [Google drive](https://drive.google.com/)
 2. Connect Google drive with [Google Colaboratory](https://colab.research.google.com)
     - right click on google drive page
@@ -52,6 +49,20 @@ $ ./program.py generate  # generate bar and stripes using trainned circuit.
 
 * paper: Differentiable Learning of Quantum Circuit Born Machine ([pdf](docs/1804.04168.pdf)), [arXiv:1804.04168](https://arxiv.org/abs/1804.04168), Jin-Guo Liu, Lei Wang
 * slides: *to be added*
+
+## Citation
+
+If you use this code for your research, please cite our paper:
+
+```
+@article{Liu2018,
+  author = {Jin-Guo Liu and Lei Wang},
+  title = {Differentiable Learning of Quantum Circuit Born Machine},
+  year = {2018},
+  eprint = {arXiv:1804.04168},
+  url = {https://arxiv.org/abs/1804.04168}
+}
+```
 
 ## Authors
 
