@@ -5,7 +5,7 @@ Gradient based training of Quantum Circuit Born Machine (QCBM)
 This project contains
 
 * `notebooks/qcbm_gaussian.ipynb` (or [online](https://drive.google.com/file/d/1LfvWuM8rUPOtdWFRbUhSyjn35ndR7OW6/view?usp=sharing)), basic tutorial of training 6 bit Gaussian distribution using QCBM,
-* `notebooks/qcbm_advanced.ipynb` (or [online](https://drive.google.com/file/d/1cA5niJga7aLcJqIdBtpGV9i0vyOen1Aq/view?usp=sharing)), an advanced tutorial,
+* `notebooks/qcbm_advanced.ipynb` (or [online](https://drive.google.com/file/d/18EDWlGacQMONJ1sxhGlQ9M3aQ5619B8F/view?usp=sharing)), an advanced tutorial,
 * `qcbm` folder, a simple python project for productivity purpose.
 
 ![](docs/images/qcbm.png)
