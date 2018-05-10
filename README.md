@@ -48,7 +48,7 @@ $ ./program.py generate  # generate bar and stripes using trainned circuit.
 ## Documentations
 
 * paper: Differentiable Learning of Quantum Circuit Born Machine ([pdf](docs/1804.04168.pdf)), [arXiv:1804.04168](https://arxiv.org/abs/1804.04168), Jin-Guo Liu, Lei Wang
-* slides: *to be added*
+* slides: [online](https://docs.google.com/presentation/d/1ZNysy-MUlkPfuxUtZMz_Sd8Mz43oC6y7FcyeGGMaQoU/edit?usp=sharing)
 
 ## Citation
 
