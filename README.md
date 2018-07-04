@@ -34,6 +34,9 @@ Clone this repository [https://github.com/GiggleLiu/QuantumCircuitBornMachine.gi
     - search "Colaboratory" and "CONNECT"
 3. You can make a copy of notebook to your google drive (File Menu) to save your edits.
 
+Also, we have provided a Julia code [here](https://quantumbfs.github.io/Yao.jl/latest/tutorial/QCBM/).
+
+
 ## Run Bar-and-Stripes Demo on Your Localhost
 
 ```bash
