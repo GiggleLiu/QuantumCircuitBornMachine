@@ -9,6 +9,9 @@ import time
 from qcbm import train
 from qcbm.testsuit import load_barstripe
 
+import mkl
+mkl.set_num_threads(1)
+
 np.random.seed(2)
 try:
     os.mkdir('data')

@@ -53,7 +53,7 @@ class ProjectQContext(object):
             # self.backend.set_qubit_locations(locations)
         elif self.task == 'simulate':
             print('ProjecQ simulation in training can be slow, since in scipy context, we cached a lot gates.')
-            self.backend = Simulator()
+            self.backend = Simulator(gate_fusion=True)
         elif self.task == 'ibm':
             # choose device
             device = self.ibm_config.get('device', 'ibmqx2' if self.num_bit<=5 else 'ibmqx5')
