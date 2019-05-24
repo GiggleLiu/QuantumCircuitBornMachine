@@ -46,6 +46,8 @@ def load_barstripe(geometry, depth, context='scipy', structure='nn'):
         pairs = random_tree()
     elif structure == 'chowliu-tree':
         pairs = chowliu_tree(p_bs)
+    elif structure == 'ring':
+        pairs = [(i, (i+1)%num_bit) for i in range(num_bit)]
     elif structure == 'nn':
         # nearest neighbor
         pairs = nearest_neighbor(geometry)

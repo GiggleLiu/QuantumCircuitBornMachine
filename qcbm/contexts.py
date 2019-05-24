@@ -8,7 +8,7 @@ import os
 try:
     from projectq.cengines import MainEngine
     from projectq.backends import CircuitDrawer, Simulator, IBMBackend
-    from projectq.ops import Measure
+    from projectq.ops import Measure, All
 except:
     print('warning: fail to import projectq')
 
@@ -96,10 +96,10 @@ class ProjectQContext(object):
             self.wf = np.array(qvec)
             order = [order[i] for i in range(len(self.qureg))]
             self.wf = np.transpose(self.wf.reshape([2]*len(self.qureg), order='F'), axes=order).ravel(order='F')
-            Measure | self.qureg
+            All(Measure) | self.qureg
             self.eng.flush()
         elif self.task == 'ibm':
-            Measure | self.qureg
+            All(Measure) | self.qureg
             self.eng.flush()
             self.res = self.backend.get_probabilities(self.qureg)
         else:
@@ -107,7 +107,7 @@ class ProjectQContext(object):
         return self
 
     def _viz_circuit(self):
-        Measure | self.qureg
+        All(Measure) | self.qureg
         self.eng.flush()
         # print latex code to draw the circuit:
         s = self.backend.get_latex()
